@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 {
 	WAMConfig *config;
 	gchar *title;
-	GtkWidget *window, *vbox, *ibox, *frame;
+	GtkWidget *window, *vbox, *ibox, *frame, *hbox;
 	gint i;
 
 	gtk_init(&argc, &argv);
@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
 		config->n_threads, config->varpath);
 
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_title(GTK_WINDOW(window), "WatchAM");
 	g_signal_connect(G_OBJECT(window), "delete-event",
 		G_CALLBACK(gtk_main_quit), NULL);
 	vbox = gtk_vbox_new(TRUE, 2);
@@ -44,15 +45,25 @@ int main(int argc, char *argv[])
 		g_free(title);
 		gtk_box_pack_start(GTK_BOX(vbox), frame, TRUE, TRUE, 0);
 		ibox = gtk_vbox_new(FALSE, 0);
+		gtk_container_set_border_width(GTK_CONTAINER(ibox), 5);
 		gtk_container_add(GTK_CONTAINER(frame), ibox);
+
+		hbox = gtk_hbox_new(FALSE, 0);
+		gtk_box_pack_start(GTK_BOX(ibox), hbox, TRUE, TRUE, 0);
+
 		config->threads[i]->progress = gtk_progress_bar_new();
 		title = g_strdup_printf("%d / %d", 0, config->threads[i]->n_files);
 		gtk_progress_bar_set_text(
 			GTK_PROGRESS_BAR(config->threads[i]->progress), title);
 		gtk_progress_bar_set_fraction(
 			GTK_PROGRESS_BAR(config->threads[i]->progress), 0.0);
-		gtk_box_pack_start(GTK_BOX(ibox), config->threads[i]->progress,
-			FALSE, TRUE, 0);
+		gtk_box_pack_start(GTK_BOX(hbox), config->threads[i]->progress,
+			TRUE, TRUE, 0);
+
+		config->threads[i]->image = gtk_image_new_from_stock(
+			GTK_STOCK_EXECUTE, GTK_ICON_SIZE_BUTTON);
+		gtk_box_pack_start(GTK_BOX(hbox), config->threads[i]->image,
+			FALSE, FALSE, 5);
 		config->threads[i]->label = gtk_label_new("");
 		gtk_box_pack_start(GTK_BOX(ibox), config->threads[i]->label,
 			FALSE, TRUE, 0);
@@ -222,7 +233,12 @@ static gboolean update_thread_cb(gpointer data)
 					g_free(basename);
 				}
 			} /* is url line */
-		} /* line starts with -- */
+			/* line starts with -- */
+		} else if(strcmp(line + strlen(line) - 2, "--") == 0) {
+			gtk_label_set_text(GTK_LABEL(thread->label), "** done **");
+			gtk_image_set_from_stock(GTK_IMAGE(thread->image),
+				GTK_STOCK_APPLY, GTK_ICON_SIZE_BUTTON);
+		}
 		g_free(line);
 		while(gtk_events_pending())
 			gtk_main_iteration();

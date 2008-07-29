@@ -14,6 +14,7 @@ typedef struct {
 	guint32 n_files;
 	GtkWidget *progress;
 	GtkWidget *label;
+	GtkWidget *image;
 } WAMThread;
 
 struct _WAMConfig {
